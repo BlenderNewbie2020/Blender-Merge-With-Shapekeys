@@ -1,51 +1,71 @@
 import bpy
 from bpy.props import *
 from bpy.types import Scene
-from bpy_extras.io_utils import ExportHelper, ImportHelper
+
 import mathutils
 import json
 
 bl_info = {
-    "name" : "Shapekey Exporter",
+    "name" : "Object Join with Shapekeys",
     "author" : "BlenderNewbie2020",
-    'category': 'Import-Export',
-    'location': 'View 3D > Tool Shelf > Shapekey Exporter',
-    'warning': 'Tested insufficiently',
-    'description': 'Name based shapekey export and import tool. Original code by Narazaka.',
-    "version" : (0, 2, 1),
+    'category': 'Mesh',
+    'location': 'View 3D > Tool Shelf > Object Merge',
+    'warning': 'Does nothing. Badly.',
+    'description': 'Join selected object with active, updating existing shapkeys. Original shapekey exporter code by Narazaka.',
+    "version" : (0, 1, 0),
     "blender" : (2, 79, 0),
-    'tracker_url': 'https://github.com/BlenderNewbie2020/blender-shapekey-exporter/issues',
+    'tracker_url': 'https://github.com/BlenderNewbie2020/Blender-Merge-With-Shapekeys/issues',
 }
 
-class ShapekeyExporter_PT_Main(bpy.types.Panel):
-    bl_idname = "shapekey_exporter.main"
-    bl_label = "Shapekey Exporter"
-    bl_category = "ShapekeyExporter"
+class ObjectMerge_PT_Main(bpy.types.Panel):
+    bl_idname = "object_merge.main"
+    bl_label = "Object Merge"
+    bl_category = "ObjectMerge"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
 
     def draw(self, context):
-        self.layout.operator(ShapekeyExporter_OT_Export.bl_idname)
-        self.layout.operator(ShapekeyExporter_OT_Import.bl_idname)
+        self.layout.operator(ObjectMerge_OT_Join.bl_idname)
         return None
 
-class ShapekeyExporter_OT_Export(bpy.types.Operator, ExportHelper):
-    bl_idname = "shapekey_exporter.export"
-    bl_label = "Export"
+class ObjectMerge_OT_Join(bpy.types.Operator, JoinHelper):
+    bl_idname = "object_merge.join"
+    bl_label = "Join"
     bl_options = {'REGISTER'}
 
-    filename_ext = ".skx.json" 
-    
-    filter_glob = StringProperty( 
-            default="*.skx.json", 
-            options={'HIDDEN'}, 
-            )
-
     def execute(self, context):
-        if self.filepath == "":
-            return {'FINISHED'}
-
+        
+        """
+        Method:
+        
+        For the active object:
+            
+            1. detect a base and shapekeys:
+                if None, raise info and exit.
+                else Loop over the shapekeys to store the datavalues.
+            
+        For the selected object:
+            
+            1. detect a base shapekey:
+                if none add base and create a new key
+                else, delete all keys, create base and one new key
+            
+            2. Loop over the the new key to store the data values.
+           
+            3. For each key in the active object (1), append the data values from (2).
+            
+            4. Delete all the keys in the active object.
+            
+            5. Join selected object to active.
+            
+            6. Assign shapekeys from (3).
+            
+        """
+            
+        """
+        # Original export
+        
         data = {}
         for object_name in bpy.data.objects.keys():
             obj = bpy.data.objects[object_name]
@@ -55,9 +75,9 @@ class ShapekeyExporter_OT_Export(bpy.types.Operator, ExportHelper):
             base_key_values = [item.co for item in base_key_block.data.values()]
 
             key_blocks = obj.data.shape_keys.key_blocks
-            data[object_name] = {
+            data[object_name] = { 
                 "base": base_key_block.name,
-                "diffs": [],
+                "diffs": [], 
             }
             for key_block_name in key_blocks.keys():
                 key_block = key_blocks[key_block_name]
@@ -74,24 +94,10 @@ class ShapekeyExporter_OT_Export(bpy.types.Operator, ExportHelper):
                     "values": diff_key_values,
                 })
 
-        with open(self.filepath, mode='w', encoding="utf8") as f:
-            json.dump(data, f, sort_keys=True, indent='', ensure_ascii=False)
-
-        return {'FINISHED'}
-
-class ShapekeyExporter_OT_Import(bpy.types.Operator, ImportHelper):
-    bl_idname = "shapekey_exporter.import"
-    bl_label = "Import"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    filename_ext = ".skx.json" 
-    
-    filter_glob = StringProperty( 
-            default="*.skx.json", 
-            options={'HIDDEN'}, 
-            )
-
-    def execute(self, context):
+        """
+        
+        """
+        # Original import
         data = None
         with open(self.filepath, mode='r', encoding="utf8") as f:
             data = json.load(f)
@@ -127,11 +133,13 @@ class ShapekeyExporter_OT_Import(bpy.types.Operator, ImportHelper):
                     key_blocks[key_block_name].data[i].co = key_values[i] + base_key_values[i]
 
         return {'FINISHED'}
+        """
 
+        return {'FINISHED'}
+        
 classes = (
-    ShapekeyExporter_PT_Main,
-    ShapekeyExporter_OT_Export,
-    ShapekeyExporter_OT_Import,
+    ObjectMerge_PT_Main,
+    ObjectMerge_OT_Join
 )
 
 def register():
