@@ -7,11 +7,11 @@ import json
 
 bl_info = {
     "name" : "Shapekey Exporter",
-    "author" : "Narazaka",
+    "author" : "BlenderNewbie2020",
     'category': 'Import-Export',
     'location': 'View 3D > Tool Shelf > Shapekey Exporter',
     'warning': 'Tested insufficiently',
-    'description': 'Name based shapekey export and import tool.',
+    'description': 'Name based shapekey export and import tool. Original code by Narazaka.',
     "version" : (0, 2, 1),
     "blender" : (2, 79, 0),
     'tracker_url': 'https://github.com/BlenderNewbie2020/blender-shapekey-exporter/issues',
@@ -75,7 +75,7 @@ class ShapekeyExporter_OT_Export(bpy.types.Operator, ExportHelper):
                 })
 
         with open(self.filepath, mode='w', encoding="utf8") as f:
-            json.dump(data, f, sort_keys=True, indent=4, ensure_ascii=False)
+            json.dump(data, f, sort_keys=True, indent='', ensure_ascii=False)
 
         return {'FINISHED'}
 
