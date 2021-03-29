@@ -8,29 +8,27 @@ import json
 bl_info = {
     "name" : "Shapekey Exporter",
     "author" : "Narazaka",
-    'category': 'Mesh',
-    'location': 'View 3D > Tool Shelf(2.79) / Sidebar(2.80) > Shapekey Exporter',
-    'description': 'Name based shapekey export and import tool',
-    "version" : (0, 2, 0),
-    "blender" : (2, 80, 0),
-    'tracker_url': 'https://github.com/Narazaka/blender-shapekey-exporter/issues',
+    'category': 'Import-Export',
+    'location': 'View 3D > Tool Shelf > Shapekey Exporter',
+    'warning': 'Tested insufficiently',
+    'description': 'Name based shapekey export and import tool.',
+    "version" : (0, 2, 1),
+    "blender" : (2, 79, 0),
+    'tracker_url': 'https://github.com/BlenderNewbie2020/blender-shapekey-exporter/issues',
 }
-
-def version_2_79_or_older():
-    return bpy.app.version < (2, 80)
 
 class ShapekeyExporter_PT_Main(bpy.types.Panel):
     bl_idname = "shapekey_exporter.main"
     bl_label = "Shapekey Exporter"
     bl_category = "ShapekeyExporter"
     bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS" if version_2_79_or_older() else "UI"
+    bl_region_type = "TOOLS"
     bl_context = "objectmode"
 
     def draw(self, context):
         self.layout.operator(ShapekeyExporter_OT_Export.bl_idname)
         self.layout.operator(ShapekeyExporter_OT_Import.bl_idname)
-        return {'FINISHED'}
+        return None
 
 class ShapekeyExporter_OT_Export(bpy.types.Operator, ExportHelper):
     bl_idname = "shapekey_exporter.export"
