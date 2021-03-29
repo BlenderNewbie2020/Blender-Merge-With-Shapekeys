@@ -1,26 +1,30 @@
 # Shapekey Exporter (blender addon)
 
-This addon can export and import relative shapekeys in the scene.
+Addon to export and import relative shapekeys for all objects in the scene.
 
 ## Install
 
-for Blender 2.79 / 2.80
+for Blender 2.79 only.
 
-Download [blender-shapekey-exporter.py](https://raw.githubusercontent.com/Narazaka/blender-shapekey-exporter/master/blender-shapekey-exporter.py) and install it.
+Download [blender-shapekey-exporter.py](https://raw.githubusercontent.com/BlenderNewbie2020/blender-shapekey-exporter/master/blender-shapekey-exporter.py) and install it.
 
 ## Usage
 
-Open Tool Shelf by Ctrl+T (2.79) or Sidebar by Ctrl+N (2.80) and you can see the "Shapekey Exporter" tab.
+Open Tool Shelf with Ctrl+T to see the "Shapekey Exporter" tab.
 
 ### Export
 
-This button exports shapekeys to save file.
+This button exports shapekeys to a json file.
 
 ### Import
 
-This button imports shapekeys from save file.
+This button imports shapekeys from the saved file.
 
-Caution: All shapekeys that defined in save file are overwrited! If you want partial import, edit save file and delete unneeded entries.
+Caution: All shapekeys defined in save file will overwrite those in the objects in the scene.
+
+## Todo
+
+Restrict export and import to active object only.
 
 ## License
 
