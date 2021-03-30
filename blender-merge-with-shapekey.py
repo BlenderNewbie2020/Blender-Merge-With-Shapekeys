@@ -1,17 +1,18 @@
+# Adapted from Narazaka's original code to export shapekeys https://github.com/Narazaka/blender-shapekey-exporter
+
 import bpy
 from bpy.props import *
 from bpy.types import Scene
 
 import mathutils
-import json
 
 bl_info = {
-    "name" : "Object Join with Shapekeys",
+    "name" : "Merge Different Objects with Shapekeys",
     "author" : "BlenderNewbie2020",
     'category': 'Mesh',
     'location': 'View 3D > Tool Shelf > Object Merge',
-    'warning': 'Does nothing. Badly.',
-    'description': 'Join selected object with active, updating existing shapkeys. Original shapekey exporter code by Narazaka.',
+    'warning': 'Requires more thorough testing and a more appropriate location.',
+    'description': 'Given two objects with different geometry, attempts to join a first selected object with a second active object, replacing existing shapkeys.',
     "version" : (0, 1, 0),
     "blender" : (2, 79, 0),
     'tracker_url': 'https://github.com/BlenderNewbie2020/Blender-Merge-With-Shapekeys/issues',
@@ -35,108 +36,115 @@ class ObjectMerge_OT_Join(bpy.types.Operator, JoinHelper):
     bl_options = {'REGISTER'}
 
     def execute(self, context):
-        
-        """
-        Method:
-        
-        For the active object:
-            
-            1. detect a base and shapekeys:
-                if None, raise info and exit.
-                else Loop over the shapekeys to store the datavalues.
-            
-        For the selected object:
-            
-            1. detect a base shapekey:
-                if none add base and create a new key
-                else, delete all keys, create base and one new key
-            
-            2. Loop over the the new key to store the data values.
-           
-            3. For each key in the active object (1), append the data values from (2).
-            
-            4. Delete all the keys in the active object.
-            
-            5. Join selected object to active.
-            
-            6. Assign shapekeys from (3).
-            
-        """
-            
-        """
-        # Original export
-        
-        data = {}
-        for object_name in bpy.data.objects.keys():
-            obj = bpy.data.objects[object_name]
-            if obj.type != 'MESH' or not obj.data.shape_keys:
-                continue
-            base_key_block = obj.data.shape_keys.reference_key
-            base_key_values = [item.co for item in base_key_block.data.values()]
 
-            key_blocks = obj.data.shape_keys.key_blocks
-            data[object_name] = { 
-                "base": base_key_block.name,
-                "diffs": [], 
-            }
-            for key_block_name in key_blocks.keys():
-                key_block = key_blocks[key_block_name]
-                if base_key_block == key_block: # base
-                    continue
-                key_values = [item.co for item in key_block.data.values()]
-                if len(key_values) != len(base_key_values):
-                    raise RuntimeError("mesh vertex count is different: " + key_block_name)
-                diff_key_values = []
-                for i in range(len(key_values)):
-                    diff_key_values.append((key_values[i] - base_key_values[i])[:])
-                data[object_name]["diffs"].append({
-                    "name": key_block_name,
-                    "values": diff_key_values,
-                })
+        ''' Verify selection '''
 
-        """
-        
-        """
-        # Original import
-        data = None
-        with open(self.filepath, mode='r', encoding="utf8") as f:
-            data = json.load(f)
+        if len(bpy.context.selected_objects) != 2:
+            raise RuntimeError("Two objects must be selected.")
 
-        for object_name in data.keys():
-            if len(data[object_name]["diffs"]) == 0:
-                continue
-            obj = bpy.data.objects[object_name]
+        for obj in bpy.context.selected_objects:
             if obj.type != 'MESH':
+                raise RuntimeError("Both objects must be meshes.")
+
+        for obj in bpy.context.selected_objects:
+            if obj == bpy.context.scene.objects.active:
+                dest = obj
+            else:
+                srce = obj
+
+        data = {}
+
+        ''' Process the source object '''
+
+        if not srce.data.shape_keys:
+            # Add a basis shapekey and an empty shapekey
+            srce.shape_key_add('Basis')
+            srce.shape_key_add('Key')
+
+        base_key_block = srce.data.shape_keys.reference_key
+        srce_base_key_values = [item.co for item in base_key_block.data.values()]
+        key_blocks = srce.data.shape_keys.key_blocks
+
+        for key_block_name in key_blocks.keys():
+            key_block = key_blocks[key_block_name]
+
+            # Do nothing for the source base key
+            if base_key_block == key_block:
                 continue
 
-            # ensure base key
-            if not obj.data.shape_keys:
-                obj.shape_key_add()
-                obj.data.shape_keys.key_blocks[-1].name = data[object_name]["base"]
-            base_key_block = obj.data.shape_keys.reference_key
-            base_key_values = [item.co for item in base_key_block.data.values()]
+            key_values = [item.co for item in key_block.data.values()]
+            if len(key_values) != len(srce_base_key_values):
+                raise RuntimeError("1. Source mesh vertex count is different: " + key_block_name)
 
-            key_blocks = obj.data.shape_keys.key_blocks
-            # overwrite always (TODO: selectable)
-            for key_block_data in data[object_name]["diffs"]:
-                key_block_name = key_block_data["name"]
-                key_block = key_blocks.get(key_block_name)
-                if not key_block:
-                    obj.shape_key_add()
-                    key_blocks[-1].name = key_block_name
-                if base_key_block == key_block: # base
-                    continue
-                key_values = [mathutils.Vector(vec) for vec in key_block_data["values"]]
-                if len(key_values) != len(base_key_values):
-                    raise RuntimeError("mesh vertex count is different: " + key_block_name)
-                for i in range(len(key_values)):
-                    key_blocks[key_block_name].data[i].co = key_values[i] + base_key_values[i]
+            srce_diff_key_values = []
+            for i in range(len(key_values)):
+                srce_diff_key_values.append((key_values[i] - srce_base_key_values[i])[:])
+
+
+        ''' Process the destination object '''
+
+        base_key_block = dest.data.shape_keys.reference_key
+        base_key_values = [item.co for item in base_key_block.data.values()]
+        key_blocks = dest.data.shape_keys.key_blocks
+
+        data[dest.name] = {
+                        "base": base_key_block.name,
+                        "diffs": [],
+        }
+
+        for key_block_name in key_blocks.keys():
+            key_block = key_blocks[key_block_name]
+            key_values = [item.co for item in key_block.data.values()]
+
+            # If basis key, do nothing
+            if base_key_block == key_block:
+                continue
+
+            diff_key_values = []
+            for i in range(len(key_values)):
+                diff_key_values.append((key_values[i] - base_key_values[i])[:])
+
+            # Append the source key values so the vertex count matches
+            for i in range(len(srce_diff_key_values)):
+                diff_key_values.append(srce_diff_key_values[i][:])
+
+            data[dest.name]["diffs"].append({
+                "name": key_block_name,
+                "values": diff_key_values,
+            })
+
+        """ Join the source to the destination """
+
+        bpy.ops.object.join()
+
+        """ Set the modified shapekeys """
+
+        # Always clear and recreate the shapekeys
+        for k in key_blocks:
+            dest.shape_key_remove(k)
+
+        dest.shape_key_add('Basis')
+
+        base_key_block = dest.data.shape_keys.reference_key
+        base_key_values = [item.co for item in base_key_block.data.values()]
+        key_blocks = dest.data.shape_keys.key_blocks
+
+        for key_block_data in data[dest.name]["diffs"]:
+            key_block_name = key_block_data["name"]
+            key_block = key_blocks.get(key_block_name)
+            if not key_block:
+                dest.shape_key_add()
+                key_blocks[-1].name = key_block_name
+            if base_key_block == key_block:
+                continue
+            key_values = [mathutils.Vector(vec) for vec in key_block_data["values"]]
+            if len(key_values) != len(base_key_values):
+                raise RuntimeError("3. mesh vertex count is different: " + key_block_name)
+            for i in range(len(key_values)):
+                key_blocks[key_block_name].data[i].co = key_values[i] + base_key_values[i]
 
         return {'FINISHED'}
-        """
 
-        return {'FINISHED'}
-        
 classes = (
     ObjectMerge_PT_Main,
     ObjectMerge_OT_Join
