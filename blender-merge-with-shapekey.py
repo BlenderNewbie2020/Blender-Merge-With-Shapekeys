@@ -5,6 +5,7 @@ from bpy.props import *
 from bpy.types import Scene
 
 import mathutils
+import itertools
 
 bl_info = {
     "name" : "Merge Different Objects with Shapekeys",
@@ -76,10 +77,7 @@ class ObjectMerge_OT_Join(bpy.types.Operator, JoinHelper):
             if len(key_values) != len(srce_base_key_values):
                 raise RuntimeError("1. Source mesh vertex count is different: " + key_block_name)
 
-            srce_diff_key_values = []
-            for i in range(len(key_values)):
-                srce_diff_key_values.append((key_values[i] - srce_base_key_values[i])[:])
-
+            srce_diff_key_values = [a - b for a, b in zip(key_values, srce_base_key_values)]
 
         ''' Process the destination object '''
 
@@ -100,14 +98,12 @@ class ObjectMerge_OT_Join(bpy.types.Operator, JoinHelper):
             if base_key_block == key_block:
                 continue
 
-            diff_key_values = []
-            for i in range(len(key_values)):
-                diff_key_values.append((key_values[i] - base_key_values[i])[:])
-
+            diff_key_values = [a - b for a, b in zip(key_values, base_key_values)]
+            
             # Append the source key values so the vertex count matches
-            for i in range(len(srce_diff_key_values)):
-                diff_key_values.append(srce_diff_key_values[i][:])
-
+            combined = [diff_key_values, srce_diff_key_values]
+            diff_key_values = list(itertools.chain.from_iterable(combined))
+            
             data[dest.name]["diffs"].append({
                 "name": key_block_name,
                 "values": diff_key_values,
