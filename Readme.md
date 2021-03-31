@@ -1,4 +1,4 @@
-# Blender Merge With Shapekeys (blender addon) for Blender 2.79 only.
+# Merge Objects with Shapekeys (Addon for Blender 2.79 only).
 
 ## Merge two objects with differing geometries
 
@@ -16,9 +16,9 @@ Select the first _source_ object. Shift-select the second _destination_ object. 
 
 ## Install
 
-Do not try this at home.
+Do not try this at home. Download does not exist yet.
 
-Download [Blender-Merge-With-Shapekeys.py](https://raw.githubusercontent.com/BlenderNewbie2020/Blender-Merge-With-Shapekeys/master/Blender-Merge-With-Shapekeys.py) and install it.
+Download [Merge-Objects-with-Shapekeys.py](https://raw.githubusercontent.com/BlenderNewbie2020/Blender-Merge-With-Shapekeys/master/merge-objects-with-shapekeys.py) and install it.
 
 ## License
 
