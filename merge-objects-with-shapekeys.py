@@ -8,7 +8,7 @@ import mathutils
 import itertools
 
 bl_info = {
-    "name" : "Merge Different Objects with Shapekeys",
+    "name" : "Merge Objects with Shapekeys",
     "author" : "BlenderNewbie2020",
     'category': 'Mesh',
     'location': 'View 3D > Tool Shelf > Object Merge',
